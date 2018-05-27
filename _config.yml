@@ -16,7 +16,7 @@ avatar: https://raw.githubusercontent.com/loatheb/tiny-all-over-the-world/7cdfac
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
 url: https://zhangzhao.name
 root: /
-permalink: :year/:month/:day/:title/
+permalink: posts/:title/
 permalink_defaults:
 
 # Directory

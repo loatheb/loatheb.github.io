@@ -12,4 +12,4 @@ Disallow: /font/
 Disallow: /images/
 
 Sitemap: https://www.zhangzhao.name/sitemap.xml
-Sitemap: http://www.zhangzhao.name/baidusitemap.xml
+Sitemap: https://www.zhangzhao.name/baidusitemap.xml

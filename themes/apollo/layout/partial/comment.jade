@@ -2,8 +2,10 @@
 link(rel='stylesheet', href='https://imsun.github.io/gitment/style/default.css')
 script(src='https://imsun.github.io/gitment/dist/gitment.browser.js')
 script.
+  var PAGE_COMMENT_TITLE = '#{page.title}' || '';
+script.
   var gitment = new Gitment({
-    id: '{{ page.title }}',
+    id: PAGE_COMMENT_TITLE,
     owner: 'loatheb',
     repo: 'loatheb.github.io',
     oauth: {

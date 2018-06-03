@@ -2,7 +2,8 @@
 link(rel='stylesheet', href='https://imsun.github.io/gitment/style/default.css')
 script(src='https://imsun.github.io/gitment/dist/gitment.browser.js')
 script.
-  var PAGE_COMMENT_TITLE = '#{page.title}' || '';
+  var PAGE_TITLE = '#{page.title}' || '';
+  var PAGE_COMMENT_TITLE = PAGE_TITLE.length < 50 ? PAGE_TITLE : '#{page.date}';
 script.
   var gitment = new Gitment({
     id: PAGE_COMMENT_TITLE,

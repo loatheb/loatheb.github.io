@@ -138,12 +138,12 @@ var moduleA = r("./moduleA");
 
 moduleA.then(module => {
   // 这里拿到 module 结果
-})(
-  (async function() {
-    var moduleB = await r("./moduleB");
-    // 这里拿到 module 的结果
-  })()
-);
+});
+
+(async function() {
+  var moduleB = await r("./moduleB");
+  // 这里拿到 module 的结果
+})();
 ```
 
 说实话这种方式也很愚蠢。不过中间我想了个方法，包裹函数时多包一层，包一个 IIFE 然后自执行一个 async 的 wrapper，不过这样的话 bootstrap 文件就必须还得手动包裹在 async 的函数中，子函数的问题解决了但是上层没有解决，不够完美。
@@ -172,3 +172,7 @@ var moduleB = r("https://baidu.com");
 * top level await
 
 在之前的过程中我们只是包了一层注入参数的函数进去，当然也可以上层包裹一层 async 函数，这样就可以在使用 nedo require 的包内部直接使用顶层 await，不需要再使用 async 进行包裹
+
+### 最终结果
+
+最后经过几个小时的不懈努力，最终能够将 hello world 跑起来了，代码还处于 pre-pre-pre-prototype 的阶段。仓库地址 [nedo](https://github.com/loatheb/nedo) ，希望大家多帮忙 review，提供更多建设性的意见...

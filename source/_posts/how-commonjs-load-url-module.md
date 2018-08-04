@@ -42,7 +42,7 @@ tags:
 如果有同学看过 webpack 打包出来的结果，可以发现有这么一个现象，所有模块化的内容都处在一个函数的闭包中，内部所有的模块加载函数都替换成了 `__webpack_require__` 这类的 webpack 内部变量。
 </div>
 
-还有一个问题，在 CommonJS 模块化规范中我们或多或少在每个文件中会写 module, module.exports require 等等这样的「字眼」，因为这里的 module 和 require 讲道理并不能称为关键字，JS 中关于模块加载方面的关键字只有 ESModule 中 import 和 export 等等相关的内容，他们是真真正正的关键字。而这里 CommonJS 里面带来的 module 和 require 则完全算是自己实现的一种 hack，在日常的 CommonJS 模块书写过程中，module 对象和 require 函数完全是 node 在包解析时注入进去的（类似上面的 `__webpack_require__`）
+还有一个问题，在 CommonJS 模块化规范中我们或多或少在每个文件中会写 module, require 等等这样的「字眼」，module 和 require 并不能称为关键字，JS 中关于模块加载方面的关键字只有 ESModule 中 import 和 export 等等相关的内容。在日常的模块书写过程中，module 对象和 require 函数完全是 node 在包解析时注入进去的（类似上面的 `__webpack_require__`）
 
 这也就给了我们极大的想象空间，我们也完全可以将上面拿到的 module 进行包裹然后注入我们传递的每一个变量。简单的例子：
 

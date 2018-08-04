@@ -1,9 +1,9 @@
 menu:
-    Blog: /
-    Archive: /archives/
-    Weibo: https://weibo.com/loatheb
+    博客: /
+    归档: /archives/
+    微博: https://weibo.com/loatheb
     GitHub: https://github.com/loatheb
-    Rss: /atom.xml
+    Rss 订阅: /atom.xml
 
 favicon: /favicon.png
 logo: /favicon.png
@@ -18,4 +18,4 @@ duoshuo:
 ga: UA-113346354-1
 
 # Copyright Infomation
-startyear: 2016
+startyear: 2017

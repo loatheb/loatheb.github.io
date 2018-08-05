@@ -14,7 +14,7 @@ body {
     font-size: 16px;
     line-height: 1.7;
     background-color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'sourcesanspro', 'Helvetica Neue', Arial, sans-serif;
+    font-family: PingFangSC-Regular, -apple-system, BlinkMacSystemFont, 'sourcesanspro', 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: subpixel-antialiased;
     -moz-osx-font-smoothing: subpixel-antialiased;
     font-smoothing: subpixel-antialiased;
@@ -34,6 +34,7 @@ ul {
 a, a:active {
     color: #2c3e50;
     text-decoration: none;
+    font-weight: bold;
 }
 
 a.nav-list-link.active,

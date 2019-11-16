@@ -154,7 +154,7 @@ Node.js 里我们直接通过 `node index.js` 来查看模块输出结果，在 
 
 同样的，AMD 的模块也不能直接运行在 node 端，因为内部的 `define` 函数，`require` 函数都必须配合在浏览器中加载 require.js 这类 AMD 库才能使用。
 
-## UMD 模块与包管理
+## 能同时被 CommonJS 规范和 AMD 规范加载的 UMD 模块
 
 有时候我们写的模块需要同时运行在浏览器端和 Node.js 里面，这也就需要我们分别写一份 AMD 模块和 CommonJS 模块来运行在各自环境，这样如果每次模块内容有改动还得去两个地方分别进行更改，就比较麻烦。
 
@@ -227,7 +227,7 @@ export default m;
 ESModule 与 CommonJS 和 AMD 最大的区别在于，ESModule 是由 JS 解释器实现，而后两者是在宿主环境中运行时实现。ESModule 导入实际上是在语法层面新增了一个语句，而 AMD 和 CommonJS 加载模块实际上是调用了 `require` 函数。
 
 ```js
-// 这是一个新的语法，我们没办法兼容，如果浏览器无法解析就会报错
+// 这是一个新的语法，我们没办法兼容，如果浏览器无法解析就会报语法错误
 import moduleA from "./moduleA";
 
 // 我们只需要新增加一个 require 函数，就可以首先保证 AMD 或 CommonJS 模块不报语法错误
@@ -268,6 +268,10 @@ Node.js 在 V12 版本之后才可以使用 ESModule 规范的模块，在 V12 �
 社区有非常多优秀的打包工具，但我写这个系列文章的目的，就是自己实现这么一个简单的能打包模块的工具，跟读者分享一下主要思路和设计。这个小工具的主要目标是要实现：
 * 能在 WEB 端使用 CommonJS 模块
 * 能同时支持 **同步加载(synchronous import)** 和 **异步加载(dynamic import)**
+
+这是 **[100 行代码实现一个前端 JS 模块打包工具]** 这个系列的第一篇文章，主要先阐明模块化的发展、模块化规范的区别以及为什么我们需要打包工具。
+
+下一篇文章开始进入正题，主要介绍打包工具运行时代码相关的思考。
 
 同时本系列介绍的所有代码都开源在自己写的 github 项目[100-lines-of-code-challenge-js](https://github.com/loatheb/100-lines-of-code-challenge-js)当中。
 

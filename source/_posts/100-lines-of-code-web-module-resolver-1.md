@@ -235,6 +235,44 @@ function require() {}
 const moduleA = require("./moduleA");
 ```
 
+ESModule 规范支持通过这些方式导入导出代码，具体使用哪种情况得根据如何导出来决定：
+```js
+import { var1, var2 } from './moduleA';
+import * as vars from './moduleB';
+import m from './moduleC';
+
+export default {
+    var1: 1,
+    var2: 2
+}
+
+export const var1 = 1;
+
+const obj = {
+    var1,
+    var2
+};
+export default obj;
+```
+
+这里又一个地方需要额外指出，`import {var1} from "./moduleA"` 这里的括号并不代表获取结果是个对象，虽然与 ES6 之后的对象解构语法非常相似。
+
+```js
+// 这些用法都是错误的，这里不能使用对象默认值，对象 key 为变量这些语法
+import {var1 = 1} from "./moduleA"
+import {[test]: a} from "./moduleA";
+
+// 这个才是 ESModule 导入语句种正确的重命名方式
+import {var1 as customVar1} from "./moduleA";
+
+// 这些用法都是合理的，因为 CommonJS 导出的就是个对象，我们可以用操作对象的方式来操作导出结果
+const {var1 = 1} = require("./moduleA");
+const {[test]: var1 = a} = require("./moduleA");
+
+// 这种用法是错误的，因为对象不能这么使用
+const {var1 as customVar1} = require("./moduleA");
+```
+
 用一张图来表示各种模块规范语法和它们所处环境之间的关系：
 
 ![/100-lines-of-code-web-module-resolver-1/env.png](/images/100-lines-of-code-web-module-resolver-1/env.png)
@@ -242,6 +280,14 @@ const moduleA = require("./moduleA");
 每个 JS 的运行环境都有一个解析器，否则这个环境也不会认识 JS 语法。它的作用就是用 ECMAScript 的规范去解释 JS 语法，也就是处理和执行语言本身的内容，例如按照逻辑正确执行 `var a = "123";`，`function func() {console.log("hahaha");}` 之类的内容。
 
 在解析器的上层，每个运行环境都会在解释器的基础上封装一些环境相关的 API。例如 Node.js 中的 `global` 对象、`process` 对象，浏览器中的 `window` 对象，`document` 对象等等。这些运行环境的 API 受到各自规范的影响，例如浏览器端的 W3C 规范，它们规定了 `window` 对象和 `document` 对象上的 API 内容，以使得我们能让 `document.getElementById` 这样的 API 在所有浏览器上运行正常。
+
+<div class="tip">
+<p>事实上，类似于 `setTimeout` 和 `console` 这样的 API，大部分也不是 JS Core 层面的，只不过是所有运行环境实现了相似的结果。</p>
+
+<p>`setTimeout` 在 ES7 规范之后才进入 JS Core 层面，在这之前都是浏览器和 Node.js 等环境进行实现。</p>
+
+<p>`console` 类似 `promise`，有自己的规范，但实际上也是环境自己进行实现的，这也就是为什么 Node.js 的 `console.log` 是异步的而浏览器是同步的一个原因。同时，早期的 Node.js 版本是可以使用 `sys.puts` 来代替 `console.log` 来输出至 stdout 的。</p>
+</div>
 
 ESModule 就属于 JS Core 层面的规范，而 AMD，CommonJS 是运行环境的规范。所以，想要使运行环境支持 ESModule 其实是比较简单的，只需要升级自己环境中的 JS Core 解释引擎到足够的版本，引擎层面就能认识这种语法，从而不认为这是个 **语法错误(syntax error)** ，运行环境中只需要做一些兼容工作即可。
 
@@ -261,7 +307,7 @@ Node.js 在 V12 版本之后才可以使用 ESModule 规范的模块，在 V12 �
 
 ![/100-lines-of-code-web-module-resolver-1/babel-esmodule.png](/images/100-lines-of-code-web-module-resolver-1/babel-esmodule.png)
 
-这就造成了另一个问题，这样带有模块化关键词的模块，编译之后还是没办法直接运行在浏览器中，因为浏览器端并不能运行 CommonJS 的模块。为了能在 WEB 端直接使用 CommonJS 规范的模块，除了编译之外，我们还需要一个步骤叫做 **打包(bundle)** 。
+这就造成了另一个问题，这样带有模块化关键词的模块，编译之后还是没办法直接运行在浏览器中，因为浏览器端并不能运行 CommonJS 的模块。为了能在 WEB 端直接使用 CommonJS 规范的模块，除了编译之外，我们还需要一个步骤叫做**打包(bundle)**。
 
 打包工具的作用，就是将模块化内部实现的细节抹平，无论是 AMD 还是 CommonJS 模块化规范的模块，经过打包处理之后能变成能直接运行在 WEB 或 Node.js 的内容。
 

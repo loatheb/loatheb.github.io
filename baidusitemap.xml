@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+
+    
+  <url>
+    <loc>https://zhangzhao.name/posts/how-commonjs-load-url-module/</loc>
+    <lastmod>2019-11-17T03:46:41.583Z</lastmod>
+    <data>
+        <display>
+        <title>使 node 也支持从 url 加载一个 module</title>
+        <pubTime>2018-06-02T16:00:00.000Z</pubTime>
+        
+        <tag>CommonJS</tag>
+         
+        <tag>Node</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://zhangzhao.name/posts/immer-immutable/</loc>
+    <lastmod>2019-11-17T03:46:41.583Z</lastmod>
+    <data>
+        <display>
+        <title>immer.js 简介及源码简析：更简单，更快速的创建不可变数据类型</title>
+        <pubTime>2018-01-31T16:00:00.000Z</pubTime>
+        
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://zhangzhao.name/posts/make-a-1-a-2-a-3-evaluate-true/</loc>
+    <lastmod>2019-11-17T03:46:41.583Z</lastmod>
+    <data>
+        <display>
+        <title>如何让 (a == 1 && a == 2 && a == 3) 返回 true</title>
+        <pubTime>2018-01-17T16:00:00.000Z</pubTime>
+        
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://zhangzhao.name/posts/100-lines-of-code-web-module-resolver-1/</loc>
+    <lastmod>2019-11-17T03:46:41.583Z</lastmod>
+    <data>
+        <display>
+        <title>100 行代码实现一个前端 JS 模块打包工具 - 1 - 模块化概览</title>
+        <pubTime>2019-11-09T16:00:00.000Z</pubTime>
+        
+        <tag>CommonJS</tag>
+         
+        <tag>Node</tag>
+         
+        <tag>Bundler</tag>
+         
+        <tag>webpack</tag>
+         
+        <tag>fis</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+</urlset>

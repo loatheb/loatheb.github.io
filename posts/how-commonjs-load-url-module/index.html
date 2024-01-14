@@ -72,28 +72,7 @@
 </ul>
 <p>在之前的过程中我们只是包了一层注入参数的函数进去，当然也可以上层包裹一层 async 函数，这样就可以在使用 nedo require 的包内部直接使用顶层 await，不需要再使用 async 进行包裹</p>
 <h3 id="最终结果"><a href="#最终结果" class="headerlink" title="最终结果"></a>最终结果</h3><p>最后经过几个小时的不懈努力，最终能够将 hello world 跑起来了，代码还处于 pre-pre-pre-prototype 的阶段。仓库地址 <a target="_blank" rel="noopener" href="https://github.com/loatheb/nedo">nedo</a> ，希望大家多帮忙 review，提供更多建设性的意见…</p>
-</div></article></div></main><footer><div class="paginator"><a href="/posts/100-lines-of-code-web-module-resolver-1/" class="prev">上一篇</a><a href="/posts/immer-immutable/" class="next">下一篇</a></div><div id="container"></div><link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css"><script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script><script>var PAGE_SOURCE = 'posts/how-commonjs-load-url-module/' || '';</script><script>function pagePathMap(id) {
-  var map = {
-    'posts/100-lines-of-code-web-module-resolver-1/': '100 行代码实现一个前端 JS 模块打包工具 - 1 - 模块化概览',
-    'posts/how-commonjs-load-url-module/': '使 node 也支持从 url 加载一个 module',
-    'posts/immer-immutable/': '下一代状态管理工具 immer 简介及源码解析',
-    'posts/make-a-1-a-2-a-3-evaluate-true/': '如何让 (a == 1 && a == 2 && a == 3) 返回 true'
-  };
-  if (map[id]) {
-    return map[id];
-  }
-  return id;
-}
-var gitment = new Gitment({
-  id: pagePathMap(PAGE_SOURCE),
-  owner: 'loatheb',
-  repo: 'loatheb.github.io',
-  oauth: {
-      client_id: 'a991a0c92a23969e5050',
-      client_secret: '74bc5b7e13c0e3e83cceb75403eefdc4de29a0a8',
-  }
-})
-gitment.render('container')</script><div class="copyright"><p>© 2017 - 2024 <a href="https://zhangzhao.name">loatheb</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-113346354-1",'auto');ga('send','pageview');</script><script>var ba = 'b0c67e473d188544afaabed16e997cf5';
+</div></article></div></main><footer><div class="paginator"><a href="/posts/100-lines-of-code-web-module-resolver-1/" class="prev">上一篇</a><a href="/posts/immer-immutable/" class="next">下一篇</a></div><div id="container"></div><div class="copyright"><p>© 2017 - 2024 <a href="https://zhangzhao.name">loatheb</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-113346354-1",'auto');ga('send','pageview');</script><script>var ba = 'b0c67e473d188544afaabed16e997cf5';
 var _hmt = _hmt || [];
 (function() {
     var hm = document.createElement("script");

@@ -1,0 +1,34 @@
+name: build
+
+on:
+  push:
+    branches:
+      - src
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+      - name: Install Dependency
+        env:
+          NODE_OPTIONS: '--max_old_space_size=4096'
+        run: |
+        npm install -g hexo-cli && yarn
+
+      - name: Build
+        run: |
+          hexo clean && hexo g
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public

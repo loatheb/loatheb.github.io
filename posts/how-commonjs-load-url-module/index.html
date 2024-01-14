@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="zh-cn"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="baidu-site-verification" content="7MyzERTGiP"><title>使 node 也支持从 url 加载一个 module · zhao.zhang</title><meta name="description" content="使 node 也支持从 url 加载一个 module - loatheb"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://zhangzhao.name/atom.xml" title="zhao.zhang"><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">博客</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">归档</a></li><li class="nav-list-item"><a href="https://weibo.com/loatheb" target="_blank" class="nav-list-link">微博</a></li><li class="nav-list-item"><a href="https://github.com/loatheb" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS 订阅</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">使 node 也支持从 url 加载一个 module</h1><div class="post-info">2018年6月3日</div><div class="post-content"><p>最近两天 ry 的新项目 deno 火了一把。作为 node 项目的发起人，如今基于 go 重新写了一个服务端 JS 上下文（后来又改成了 rust = =），同时项目名 deno 也是 “n”, “o”, “d”, “e” 四个字母更换了一下顺序，引发了大家的强烈关注以及联想。</p>
+<p>与 node 相比，deno 项目在 readme 的一开始就列举出了这个项目的优势和需要解决的问题。里面最让人瞩目的就是所有模块原生支持 ts ，同时也必须从 url 来加载一个模块，这也是与现有的 node.js 里的 CommonJS 模块化最大的不同。</p>
+<span id="more"></span>
+<p>细细品味一下，deno 的模块化与 CommonJS 相比，更多的是一些运行时(runtime)处理的能力。比如运行时处理 ts 的过程，deno 底层的 JS 解释器依旧选择了 V8 引擎，而 V8 引擎并不支持解析 ts，所以 deno 内部也是在获取 ts 文件之后动态转化为 js 文件，而从 url 加载模块就更加动态化。这两点都是目前 node CommonJS 模块所不具备的。</p>
+<p>现有的 CommonJS 底层实现过程也并不是静态化，但是却迟迟没有加入这些特性，需要用一些其他工具才能达到效果。正是因为受到 deno 这些特性的启发，所以我花了一天时间写了个小巧的库，从上层入手使用 CommonJS 来支持从 url 加载模块，同时写下这篇文章也简单介绍一下 CommonJS 的实现细节。</p>
+<h3 id="CommonJS-的执行过程"><a href="#CommonJS-的执行过程" class="headerlink" title="CommonJS 的执行过程"></a>CommonJS 的执行过程</h3><p>想要让 CommonJS 支持 url 访问或者原生加载 ts 模块，必须从 CommonJS 的执行过程中入手，在中间阶段将模块注入进去。而 CommonJS 的执行过程其实总结起来很简单，大概分为以下几点：</p>
+<ul>
+<li>处理路径依赖</li>
+</ul>
+<p>处理路径依赖应该也是所有模块化加载规范的第一步，换言之就是根据路径找到文件的位置。无论是 CommonJS 的 require 还是 ESModule 的 import，无论是相对路径还是绝对路径，都必须首先在内部对这个路径进行处理，找到合适的文件地址。</p>
+<div class="tip"><br>模块路径有可能是绝对路径，有可能是相对路径，有可能省略了后缀(js、node、json)，有可能省略了文件名(index)，甚至是动态路径(运行时基于变量的动态拼接)等等。<br></div>
+
+<p>首先就是遵守约定，同时按照一定的策略找到这个文件的真实位置，中间的过程就是补齐上面模块化省略的东西。一般都是根据 CommonJS 的这张流程图</p>
+<p><img src="/images/commonjs-module/commonjs.png" alt="commonjs"></p>
+<ul>
+<li>加载文件</li>
+</ul>
+<p>确认了路径并且确保了文件存在之后，加载文件这一步就简单粗暴的多。最简单的方式就是直接读取硬盘上的文件，将纯文本的模块源代码读取至内存。</p>
+<ul>
+<li>拼接函数</li>
+</ul>
+<p>在上一步中获取到的只是代码的文本形式源文件，并不具有执行能力。在接下来的步骤中需要将它变为一个可执行的代码段。</p>
+<div class="tip"><br>如果有同学看过 webpack 打包出来的结果，可以发现有这么一个现象，所有模块化的内容都处在一个函数的闭包中，内部所有的模块加载函数都替换成了 <code>__webpack_require__</code> 这类的 webpack 内部变量。<br></div>
+
+<p>还有一个问题，在 CommonJS 模块化规范中我们或多或少在每个文件中会写 module, require 等等这样的「字眼」，module 和 require 并不能称为关键字，JS 中关于模块加载方面的关键字只有 ESModule 中 import 和 export 等等相关的内容。在日常的模块书写过程中，module 对象和 require 函数完全是 node 在包解析时注入进去的（类似上面的 <code>__webpack_require__</code>）</p>
+<p>这也就给了我们极大的想象空间，我们也完全可以将上面拿到的 module 进行包裹然后注入我们传递的每一个变量。简单的例子：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// 纯文本代码 无法执行</span><br><span class="line">var str = 1;</span><br><span class="line">console.log(str);</span><br></pre></td></tr></table></figure>
+<p>将函数进行拼接，结果依旧是一个纯文本代码。但是已经可以给这个文件内部注入 require module 等变量，只需后续将它变为可执行文件并执行，就能把模块取出来。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span>(<span class="params"><span class="built_in">require</span>, <span class="variable language_">module</span>, <span class="built_in">exports</span>, __dirname, __filename</span>) &#123;</span><br><span class="line">  <span class="comment">// 纯文本代码</span></span><br><span class="line">  <span class="keyword">var</span> str = <span class="number">1</span>;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(str);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>转化为可执行代码</li>
+</ul>
+<p>拼接完成之后我们拿到的是还是纯字符串的代码，接下来就需要将这个字符串变成真正的代码，也就是将字符串变为可执行代码片段，这种操作在 JS 的历史上一直是危险的代名词…一直以来也有多种方法可以使用，<code>eval</code>、<code>new Function(str)</code> 等等。而在 node 环境中可以直接使用原生提供的 vm 模块，内部的沙盒环境支持我们手动注入一些变量，相对来说安全性还有所保证。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> txt = <span class="string">&quot;function(require, module, exports, __dirname, __filename) &#123;</span></span><br><span class="line"><span class="string">  module.exports = 1;</span></span><br><span class="line"><span class="string">&#125;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> vm = <span class="built_in">require</span>(<span class="string">&#x27;vm&#x27;</span>);</span><br><span class="line"><span class="keyword">var</span> script = <span class="keyword">new</span> vm.<span class="title class_">Script</span>(txt);</span><br><span class="line"><span class="keyword">var</span> func = script.<span class="title function_">runInThisContext</span>();</span><br></pre></td></tr></table></figure>
+<p>上面这个示例中，<code>func</code> 就已经是经过 <code>vm</code> 从字符串变为可执行代码段的结果，我们的 txt 给定的是一个函数，所以此时我们需要调用这个函数来最后完成模块的导出。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> m = &#123;</span><br><span class="line">  <span class="attr">exports</span>: &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_">func</span>(<span class="literal">null</span>, m, m.<span class="property">exports</span>);</span><br></pre></td></tr></table></figure>
+<p>这样的话，内部导出的内容就会被外面全局对象 <code>m</code> 所截获，将每一个模块导出的结果缓存到全局的 <code>m</code> 对象上面来。</p>
+<p>而对于 require 函数来讲，注入时我们需要考虑的就是走完上面的几个步骤，require 接受一个字符串变量路径，然后依次通过路径找到文件，获取文件，拼接函数，变为可执行代码段并执行，之后仍给全局的缓存对象，这就是 「require」需要做的内容。</p>
+<h3 id="过程中的切面"><a href="#过程中的切面" class="headerlink" title="过程中的切面"></a>过程中的切面</h3><ul>
+<li>最终形态是什么</li>
+</ul>
+<p>对于最终的形态，本质上我们是要提供一个 require 函数，它的目标就是在 runtime 能够从远端 url 加载 js 模块，能够加载 ts 模块甚至类似 babel 提供 preset 加载各种各样的模块。</p>
+<p>但是我们的 require 无法注入到 node bootstrap 阶段，所以最终结果一定得是 bootsrap 文件使用 CommonJS 模块加载，通过我们自定义的 require 加载的所有文件都能实现功能。</p>
+<ul>
+<li>生命周期的设计</li>
+</ul>
+<p>就如上面的第二部分介绍的那样，对于 require 函数我们要依次做这些事情，完全可以把每个阶段看做一个切面，任何一个阶段只关注输入和输出而不关注上个阶段是如何产出的。</p>
+<p>经过仔细的思考，最终设置了两个核心的过程，<strong>包裹模块内容</strong> 和 <strong>编译文件结果</strong>。</p>
+<p>包裹模块内容就是将字符串的文件结果包裹一下函数，专注于处理字符串结果，将普通文件的文本进行包裹。</p>
+<p>编译文件结果这一步就是将代码结果编译成 node 能够直接识别的 js 而使得下一步沙盒环境进行执行，每次通过文件结果动态在内存进行编译，从而使得下一步 js 的执行。</p>
+<ul>
+<li>同步还是异步？</li>
+</ul>
+<p>这个问题其实困扰了很久。最大的问题就是里面涉及了部分异步加载的问题，按照传统前端的做法，这里一般都是使用 callback 或者 promise（async／await) 的方式，但这样就会带来一个很大的问题。</p>
+<p>如果是 callback 的方式，那么意味着最终我的 require 可能得这样调用：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> r = <span class="built_in">require</span>(<span class="string">&quot;nedo&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> moduleA = <span class="title function_">r</span>(<span class="string">&quot;./moduleA&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> moduleB = <span class="title function_">r</span>(<span class="string">&quot;./moduleB&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">log</span>(<span class="params"><span class="variable language_">module</span></span>) &#123;</span><br><span class="line">  <span class="comment">// 所有执行过程作为 callback</span></span><br><span class="line">  <span class="comment">// 这里拿到 module 的结果</span></span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="variable language_">module</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">moduleA</span>(log); <span class="comment">// 传入 callback，moduleA 加载结束执行回调</span></span><br><span class="line"><span class="title function_">moduleB</span>(log); <span class="comment">// 传入 callback，moduleB 加载结束执行回调</span></span><br></pre></td></tr></table></figure>
+<p>这样就显得很愚蠢，即使改成 AMD 那样的 callback 调用也感觉是在开历史的倒车。</p>
+<p>如果是 promise（async/await) 这样的异步方式，那么意味着最终我的 require 可能得这样调用：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> r = <span class="built_in">require</span>(<span class="string">&quot;nedo&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> moduleA = <span class="title function_">r</span>(<span class="string">&quot;./moduleA&quot;</span>);</span><br><span class="line"></span><br><span class="line">moduleA.<span class="title function_">then</span>(<span class="function"><span class="params">module</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 这里拿到 module 结果</span></span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">(<span class="keyword">async</span> <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> moduleB = <span class="keyword">await</span> <span class="title function_">r</span>(<span class="string">&quot;./moduleB&quot;</span>);</span><br><span class="line">  <span class="comment">// 这里拿到 module 的结果</span></span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+<p>说实话这种方式也显得很愚蠢。不过中间我想了个方法，包裹函数时多包一层，包一个 IIFE 然后自执行一个 async 的 wrapper，不过这样的话 bootstrap 文件就必须还得手动包裹在 async 的函数中，子函数的问题解决了但是上层没有解决，不够完美。</p>
+<p>其实后来仔细的思考了一下，造成这样的问题的原因究其根本是因为 request 是 async 的，这就导致了后续的代码必须以 async 的方式出现。如果我们想要从硬盘读取一个文件，那么我们可以使用 promise 包裹的 fs.readFile，当然我们也可以使用 fs.readFileSync 。前者的方法会让后续的所有调用都变成异步，而后者的代码还是同步，虽然性能很差但是完全符合直觉。</p>
+<p>所以就必须找到一个 sync 的 request 的形式，才能让最终调用变的完美，最终的想法结果应该如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> r = <span class="built_in">require</span>(<span class="string">&quot;nedo&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> moduleA = <span class="title function_">r</span>(<span class="string">&quot;./moduleA&quot;</span>);</span><br><span class="line"><span class="comment">// moduleA 结果</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> moduleB = <span class="title function_">r</span>(<span class="string">&quot;https://baidu.com&quot;</span>);</span><br><span class="line"><span class="comment">// moduleB 结果，同步阻塞</span></span><br></pre></td></tr></table></figure>
+<p>思考了半天不知道 sync 的 request 应该怎么写，后来只得求助万能的 npmjs，结果真的发现了一个 <code>sync-request</code> 的包，仔细研究了一下代码发现核心是借助了 <code>sync-rpc</code> 这个包，虽然这个包 github 只有 5 个 star，下载量也不大。但是感觉却是非常的厉害，能够将任何异步的代码转化为同步调用的形式，战略性 star，日后可能大有所为…</p>
+<p><img src="/images/commonjs-module/sync-rpc.png" alt="sync-rpc"></p>
+<ul>
+<li>runtime 编译</li>
+</ul>
+<p>解决了 request async 的问题之后其他问题都变的非常简单，ts 使用 babel + ts preset 在内存中完成了编译，如果想要增加任何文件的支持，只需要在 lib/compile 下加入对应的文件后缀即可，在内存中只要能够完成编译就能够最终保证代码结果。</p>
+<ul>
+<li>top level await</li>
+</ul>
+<p>在之前的过程中我们只是包了一层注入参数的函数进去，当然也可以上层包裹一层 async 函数，这样就可以在使用 nedo require 的包内部直接使用顶层 await，不需要再使用 async 进行包裹</p>
+<h3 id="最终结果"><a href="#最终结果" class="headerlink" title="最终结果"></a>最终结果</h3><p>最后经过几个小时的不懈努力，最终能够将 hello world 跑起来了，代码还处于 pre-pre-pre-prototype 的阶段。仓库地址 <a target="_blank" rel="noopener" href="https://github.com/loatheb/nedo">nedo</a> ，希望大家多帮忙 review，提供更多建设性的意见…</p>
+</div></article></div></main><footer><div class="paginator"><a href="/posts/100-lines-of-code-web-module-resolver-1/" class="prev">上一篇</a><a href="/posts/immer-immutable/" class="next">下一篇</a></div><div id="container"></div><link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css"><script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script><script>var PAGE_SOURCE = 'posts/how-commonjs-load-url-module/' || '';</script><script>function pagePathMap(id) {
+  var map = {
+    'posts/100-lines-of-code-web-module-resolver-1/': '100 行代码实现一个前端 JS 模块打包工具 - 1 - 模块化概览',
+    'posts/how-commonjs-load-url-module/': '使 node 也支持从 url 加载一个 module',
+    'posts/immer-immutable/': '下一代状态管理工具 immer 简介及源码解析',
+    'posts/make-a-1-a-2-a-3-evaluate-true/': '如何让 (a == 1 && a == 2 && a == 3) 返回 true'
+  };
+  if (map[id]) {
+    return map[id];
+  }
+  return id;
+}
+var gitment = new Gitment({
+  id: pagePathMap(PAGE_SOURCE),
+  owner: 'loatheb',
+  repo: 'loatheb.github.io',
+  oauth: {
+      client_id: 'a991a0c92a23969e5050',
+      client_secret: '74bc5b7e13c0e3e83cceb75403eefdc4de29a0a8',
+  }
+})
+gitment.render('container')</script><div class="copyright"><p>© 2017 - 2024 <a href="https://zhangzhao.name">loatheb</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-113346354-1",'auto');ga('send','pageview');</script><script>var ba = 'b0c67e473d188544afaabed16e997cf5';
+var _hmt = _hmt || [];
+(function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?" + ba;
+    var s = document.getElementsByTagName("script")[0]; 
+    s.parentNode.insertBefore(hm, s);
+})();</script></body></html>

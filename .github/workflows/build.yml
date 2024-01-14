@@ -21,7 +21,7 @@ jobs:
         env:
           NODE_OPTIONS: '--max_old_space_size=4096'
         run: |
-        npm install -g hexo-cli && yarn
+          npm install -g hexo-cli && yarn
 
       - name: Build
         run: |
